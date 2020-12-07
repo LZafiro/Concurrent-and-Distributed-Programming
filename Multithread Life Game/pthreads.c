@@ -3,6 +3,13 @@
 #include <sys/time.h>
 #include <pthread.h>
 
+/*
+Compilacao:
+gcc -o ex pthreads.c -pthread -O3
+Execucao:
+./ex 2048 2000 4
+*/
+
 
 #define SRAND_VALUE 1985
 
@@ -57,13 +64,11 @@ void inicializacao ()
 	old = (int**) malloc(tam * sizeof(int*));
 	new = (int**) malloc(tam * sizeof(int*));
 	int i;
-    {
-        for (i = 0; i < tam; i++)
+	for (i = 0; i < tam; i++)
         {
-            old[i] = (int*)malloc(tam * sizeof(int));
-            new[i] = (int*)malloc(tam * sizeof(int));
-        }
-    }
+		old[i] = (int*)malloc(tam * sizeof(int));
+		new[i] = (int*)malloc(tam * sizeof(int));
+	}
 
 	// Gera matriz e demonstra condicao inicial
 	printf("Condicao inicial: %d\n", GerarMatriz(old));
@@ -131,25 +136,25 @@ void* Evoluir(void* param)
 		}
 		c += soma_parcial;
 	}
-    pthread_exit((void*)c);
+	pthread_exit((void*)c);
 }
 
 
 void TempoDecorrido(struct timeval inicio, struct timeval fim){
-    int tmili = (int) (1000*(fim.tv_sec - inicio.tv_sec)+
+	int tmili = (int) (1000*(fim.tv_sec - inicio.tv_sec)+
                     (fim.tv_usec - inicio.tv_usec)/1000);
-    int segundos = tmili/1000;
-    int milisegundos = tmili-segundos*1000;
-    printf("\nTempo: %d segundos %d milisegundos\n", segundos, milisegundos);
+	int segundos = tmili/1000;
+	int milisegundos = tmili-segundos*1000;
+	printf("\nTempo: %d segundos %d milisegundos\n", segundos, milisegundos);
 }
 
 
 int main(int argc, char **argv) 
 {
-    struct timeval inicio, final;
-    tam = atoi(argv[1]);
-    ger = atoi(argv[2]);
-    num_threads = atoi(argv[3]);
+	struct timeval inicio, final;
+	tam = atoi(argv[1]);
+	ger = atoi(argv[2]);
+	num_threads = atoi(argv[3]);
 	
 	/* Instantiate thread array, parameter and return status*/
 	pthread_t thread[num_threads];
@@ -158,9 +163,9 @@ int main(int argc, char **argv)
 
 	void* status;
 	int curentAlive;
-    int rc;
+	int rc;
 	
-    gettimeofday(&inicio, NULL);
+	gettimeofday(&inicio, NULL);
 
 	for(int i = 0; i < ger; i++){
 		curentAlive = 0;
@@ -187,8 +192,8 @@ int main(int argc, char **argv)
 		trocar_matrizes(&old, &new);
 	}
 
-    gettimeofday(&final, NULL);
-    TempoDecorrido(inicio, final);
+	gettimeofday(&final, NULL);
+	TempoDecorrido(inicio, final);
 
 	//printf("Geracao %d: %d\n", ger, curentAlive);
 

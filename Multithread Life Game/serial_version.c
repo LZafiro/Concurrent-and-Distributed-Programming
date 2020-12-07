@@ -2,6 +2,13 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
+/*
+Compilacao:
+gcc -o exec serial_version.c -O3
+Execucao:
+./exec 2048 2000
+*/
+
 #define SRAND_VALUE 1985
 
 int tam;
@@ -117,23 +124,23 @@ int Evoluir(int** old, int** new)
 }
 
 void TempoDecorrido(struct timeval inicio, struct timeval fim){
-    int tmili = (int) (1000*(fim.tv_sec - inicio.tv_sec)+
+	int tmili = (int) (1000*(fim.tv_sec - inicio.tv_sec)+
                     (fim.tv_usec - inicio.tv_usec)/1000);
-    int segundos = tmili/1000;
-    int milisegundos = tmili-segundos*1000;
-    printf("\nTempo: %d segundos %d milisegundos\n", segundos, milisegundos);
+	int segundos = tmili/1000;
+	int milisegundos = tmili-segundos*1000;
+	printf("\nTempo: %d segundos %d milisegundos\n", segundos, milisegundos);
 }
 
 int main(int argc, char **argv) 
 {
-    struct timeval inicio, final;
+	struct timeval inicio, final;
 	int totalVivos;
-    tam = atoi(argv[1]);
-    ger = atoi(argv[2]);
+	tam = atoi(argv[1]);
+	ger = atoi(argv[2]);
 	
 	inicializacao();
 	
-    gettimeofday(&inicio, NULL);
+	gettimeofday(&inicio, NULL);
 
 	for (int i = 0; i < ger; i++)
 	{
@@ -145,7 +152,7 @@ int main(int argc, char **argv)
 		trocar_matrizes(&old, &new);
 	}
 
-    gettimeofday(&final, NULL);
-    TempoDecorrido(inicio, final);
+	gettimeofday(&final, NULL);
+	TempoDecorrido(inicio, final);
 	return 0;
 }

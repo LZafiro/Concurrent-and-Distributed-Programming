@@ -5,7 +5,7 @@
 
 /*
 Compilacao:
-gcc -o exec jogo_vida_openmp2.c -fopenmp -O3
+gcc -o exec openmp.c -fopenmp -O3
 Execucao:
 ./exec 2048 2000 4
 */
@@ -49,7 +49,7 @@ void inicializacao ()
 	old = (int**) malloc(tam * sizeof(int*));
 	new = (int**) malloc(tam * sizeof(int*));
 	int i;
-    for (i = 0; i < tam; i++)
+    	for (i = 0; i < tam; i++)
 	{
 		old[i] = (int*)malloc(tam * sizeof(int));
 		new[i] = (int*)malloc(tam * sizeof(int));
@@ -111,40 +111,40 @@ int Evoluir(int** old, int** new)
 {
 	int i, j, c = 0;
 
-    #pragma omp parallel private(i, j) reduction (+:c)
-    {
-        #pragma omp for collapse(2)
-        for (i = 0; i < tam; i++){
-            for (j = 0; j < tam; j++){
-                new[i][j] = ViverOuMorrer(old, i, j);
-                c += new[i][j];
-            }
-        }
-    }
+    	#pragma omp parallel private(i, j) reduction (+:c)
+    	{
+        	#pragma omp for collapse(2)
+        	for (i = 0; i < tam; i++){
+            		for (j = 0; j < tam; j++){
+                		new[i][j] = ViverOuMorrer(old, i, j);
+                		c += new[i][j];
+            		}
+        	}
+    	}
 
 	return c;
 }
 
 void TempoDecorrido(struct timeval inicio, struct timeval fim){
-    int tmili = (int) (1000*(fim.tv_sec - inicio.tv_sec)+
+	int tmili = (int) (1000*(fim.tv_sec - inicio.tv_sec)+
                     (fim.tv_usec - inicio.tv_usec)/1000);
-    int segundos = tmili/1000;
-    int milisegundos = tmili-segundos*1000;
-    printf("\nTempo: %d segundos %d milisegundos\n", segundos, milisegundos);
+	int segundos = tmili/1000;
+	int milisegundos = tmili-segundos*1000;
+	printf("\nTempo: %d segundos %d milisegundos\n", segundos, milisegundos);
 }
 
 int main(int argc, char **argv) 
 {
-    struct timeval inicio, final;
+	struct timeval inicio, final;
 	int totalVivos;
-    tam = atoi(argv[1]);
-    ger = atoi(argv[2]);
-    int num_threads = atoi(argv[3]);
-    omp_set_num_threads(num_threads);
+	tam = atoi(argv[1]);
+	ger = atoi(argv[2]);
+	int num_threads = atoi(argv[3]);
+	omp_set_num_threads(num_threads);
 
 	inicializacao();
 	
-    gettimeofday(&inicio, NULL);
+	gettimeofday(&inicio, NULL);
 
 	for (int i = 0; i < ger; i++)
 	{
@@ -156,7 +156,7 @@ int main(int argc, char **argv)
 		trocar_matrizes(&old, &new);
 	}
 
-    gettimeofday(&final, NULL);
-    TempoDecorrido(inicio, final);
+	gettimeofday(&final, NULL);
+	TempoDecorrido(inicio, final);
 	return 0;
 }
