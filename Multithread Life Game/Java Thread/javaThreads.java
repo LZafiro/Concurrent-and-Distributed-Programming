@@ -2,11 +2,12 @@
 import java.util.*;
 
 /*
-  1 - 110.196
-  2 - 89.383
-  4 - 117.97
-  8 - 159.192
- */
+Compilacao:
+javac javaThreads.java
+Execucao:
+java javaThreads <TAMANHO> <GERACOES> <THREADS>
+*/
+
 public class javaThreads {
 	
 	private static int[][] neW, old;
@@ -20,12 +21,9 @@ public class javaThreads {
 		RunTHevolve[] rh;
 		int i, j, resp = 0;
 		
-		Scanner sc = new Scanner(System.in);
-		
-		// Gets the thread number and array size
-		tam = sc.nextInt();
-		gen = sc.nextInt();
-		MAX_THREAD = sc.nextInt();
+		tam = Integer.parseInt(args[0]);
+		gen = Integer.parseInt(args[1]);
+		MAX_THREAD = Integer.parseInt(args[2]);
 	
 		old = new int[tam][tam];
 		neW = new int [tam][tam];
@@ -46,7 +44,7 @@ public class javaThreads {
 			for(i = 0; i < MAX_THREAD; i++) {
 				try {
 					th[i].join();
-					resp += rh[i].resul;
+					resp += rh[i].getResult();
 				} catch(InterruptedException e){
 					System.out.println("Exception");
 				}
@@ -58,7 +56,6 @@ public class javaThreads {
 			rh = null;
 			th = null;//149488
 		}
-		sc.close();
 		System.out.println("Tempo de execucao:"+(System.currentTimeMillis() - start)/1000 + "." + (System.currentTimeMillis() - start)%1000 + " segundos");
 	}
 	
@@ -87,16 +84,19 @@ public class javaThreads {
 
 class RunTHevolve implements Runnable{
 
-	private static int THREAD_NUM, tam, thAtual;
-	public int resul;
+	private int THREAD_NUM, tam, thAtual;
+	private int resul;
 	int[][] old, neW;
+	private int begin, end;
 	
-	public RunTHevolve(int aTHREAD_NUM, int atam, int athAtual, int[][] aold, int[][] aneW) {
-		THREAD_NUM = aTHREAD_NUM;
-		tam = atam;
-		thAtual = athAtual;
-		old = aold;
-		neW = aneW;		
+	public RunTHevolve(int THREAD_NUM, int tam, int thAtual, int[][] old, int[][] neW) {
+		this.THREAD_NUM = THREAD_NUM;
+		this.tam = tam;
+		this.thAtual = thAtual;
+		this.old = old;
+		this.neW = neW;
+		this.begin = (tam / THREAD_NUM)* thAtual;
+		this.end = this.begin + (tam / THREAD_NUM);
 	}
 	
 	private int CIMA(int i) {
@@ -149,19 +149,19 @@ class RunTHevolve implements Runnable{
 	}
 	
 	public void run() { 
-		int begin = tam / THREAD_NUM * thAtual;
-		int reps = begin + tam / THREAD_NUM;
 		int i, j;
-		int soma_parcial;
+		this.resul = 0;
 		
-		for(i = begin; i < reps; i++) {
-			soma_parcial = 0;
+		for(i = this.begin; i < this.end; i++) {
 			for(j = 0; j < tam; j++) {
 				neW[i][j] = this.viverOuMorrer(old, i, j);
-				soma_parcial += neW[i][j];
+				this.resul += neW[i][j];
 			}
-			resul += soma_parcial;
 		}
 		
+	}
+
+	public int getResult(){
+		return this.resul;
 	}
 }
