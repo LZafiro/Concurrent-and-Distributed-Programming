@@ -1,13 +1,13 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include <omp.h>
+#include <pthread.h>
 
 /*
 Compilacao:
-gcc -o openmp_critical openmp_critical.c -fopenmp -O3
+gcc -o pthreads pthreads_critical.c -lpthread -O3
 Execucao:
-./openmp_critical 2048 2000 4
+./pthreads 2048 2000 4
 */
 
 #define SRAND_VALUE 1985
@@ -20,10 +20,18 @@ int ger;
 #define CIMA(i) (i + tam - 1) % tam
 #define BAIXO(i) (i + 1) % tam
 
-
 int ** old = NULL;
 int ** new = NULL;
+int num_threads;
+pthread_t *thread = NULL;
+int * vet = NULL;
 
+typedef struct Tthread
+{
+	int i;		// Linha
+	int def;	// Deslocamento diferencial
+	int tr;		// Numero da Thread
+} Tthread;
 
 
 int GerarMatriz(int ** grid)
@@ -48,8 +56,10 @@ void inicializacao ()
 	// Cria matrizes dinamicamente
 	old = (int**) malloc(tam * sizeof(int*));
 	new = (int**) malloc(tam * sizeof(int*));
+	vet = (int*) malloc (sizeof(int) * num_threads);
+	thread = (pthread_t*) malloc(sizeof(pthread_t) * num_threads);
 	int i;
-    	for (i = 0; i < tam; i++)
+	for (i = 0; i < tam; i++)
 	{
 		old[i] = (int*)malloc(tam * sizeof(int));
 		new[i] = (int*)malloc(tam * sizeof(int));
@@ -107,23 +117,68 @@ int ViverOuMorrer(int** grid, int i, int j)
 }
 
 
-int Evoluir(int** old, int** new)
-{
-	int i, j, c = 0;
 
-    	#pragma omp parallel private(i, j) shared(c)
-    	{
-        	#pragma omp for collapse(2)
-        	for (i = 0; i < tam; i++){
-            		for (j = 0; j < tam; j++){
-                		new[i][j] = ViverOuMorrer(old, i, j);
-                		#pragma omp critical
-						{
-							c += new[i][j];
-						}
-            		}
-        	}
-    	}
+
+void * Iterar(void * args)
+{
+	
+	Tthread * arg = (Tthread*)(args);
+	int j = 0;
+
+	for (j = arg->def; j < ((tam/num_threads) + arg->def); j++)
+	{
+		new[arg->i][j] = ViverOuMorrer(old, arg->i, j);
+		vet[arg->tr] += new[arg->i][j];
+	}
+	pthread_exit(NULL);
+}
+
+void instanciar(int i)
+{
+	
+	int tr, x;
+	Tthread* aux = NULL;
+
+	for(tr = 0; tr < num_threads; tr++)
+	{
+		aux = malloc(sizeof(Tthread));
+		aux->i = i;
+		aux->def = ((tam/num_threads) * tr);
+		aux->tr = tr;
+		vet[tr] = 0;
+
+		x = pthread_create(&(thread[tr]), NULL, Iterar, (void*)(aux) );
+
+		if(x)
+		{
+			printf("Error: create = %d\n", x);
+			exit(-1);
+		}
+	}
+}
+
+int Evoluir()
+{
+	
+	int i, j, c = 0, rc;
+	void* status;
+		
+	for (i = 0; i < tam; i++)
+	{
+		//printf("/nInstanciar Linha: %d", i + 1);
+		instanciar(i);
+
+		for(j = 0; j < num_threads; j++)
+		{
+			rc = pthread_join(thread[j], &status);
+			if(rc)
+			{
+				printf("Error: join code = %d", rc);
+				exit(-1);
+			}		
+			c += vet[j];
+		}
+	}
 
 	return c;
 }
@@ -140,20 +195,18 @@ int main(int argc, char **argv)
 {
 	struct timeval inicio, final;
 	int totalVivos;
+	
 	tam = atoi(argv[1]);
 	ger = atoi(argv[2]);
-	int num_threads = atoi(argv[3]);
-	omp_set_num_threads(num_threads);
-
-	inicializacao();
+	num_threads = atoi(argv[3]);
 	
+	inicializacao();
+
 	gettimeofday(&inicio, NULL);
 
 	for (int i = 0; i < ger; i++)
 	{
-
-		totalVivos = Evoluir(old, new);
-
+		totalVivos = Evoluir();
 		printf("Geracao %d: %d\n", i + 1, totalVivos);
 
 		trocar_matrizes(&old, &new);

@@ -5,9 +5,9 @@
 
 /*
 Compilacao:
-gcc -o openmp_critical openmp_critical.c -fopenmp -O3
+gcc -o openmp_reduction openmp_reduction.c -fopenmp -O3
 Execucao:
-./openmp_critical 2048 2000 4
+./openmp_reduction 2048 2000 4
 */
 
 #define SRAND_VALUE 1985
@@ -111,16 +111,13 @@ int Evoluir(int** old, int** new)
 {
 	int i, j, c = 0;
 
-    	#pragma omp parallel private(i, j) shared(c)
+    	#pragma omp parallel private(i, j) reduction (+:c)
     	{
         	#pragma omp for collapse(2)
         	for (i = 0; i < tam; i++){
             		for (j = 0; j < tam; j++){
                 		new[i][j] = ViverOuMorrer(old, i, j);
-                		#pragma omp critical
-						{
-							c += new[i][j];
-						}
+                		c += new[i][j];
             		}
         	}
     	}
