@@ -7,7 +7,6 @@
 int NUM_C_THREADS;
 /* critical region */
 int SUM = 0;
-
 /* sheared control variables */
 int request = 0, respond = 0;
 
