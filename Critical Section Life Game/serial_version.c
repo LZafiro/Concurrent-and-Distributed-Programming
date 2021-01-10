@@ -1,13 +1,12 @@
 ﻿#include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include <pthread.h>
 
 /*
 Compilacao:
-gcc -o pthreads pthreads_critical.c -lpthread -O3
+gcc -o serial_version serial_version.c -lpthread -O3
 Execucao:
-./pthreads 2048 2000 4
+./serial_version 2048 2000
 */
 
 #define SRAND_VALUE 1985
@@ -22,7 +21,6 @@ int ger;
 
 int ** old = NULL;
 int ** new = NULL;
-int num_threads;
 pthread_t *thread = NULL;
 int * vet = NULL;
 
@@ -56,8 +54,6 @@ void inicializacao ()
 	// Cria matrizes dinamicamente
 	old = (int**) malloc(tam * sizeof(int*));
 	new = (int**) malloc(tam * sizeof(int*));
-	vet = (int*) malloc (sizeof(int) * num_threads);
-	thread = (pthread_t*) malloc(sizeof(pthread_t) * num_threads);
 	int i;
 	for (i = 0; i < tam; i++)
 	{
@@ -116,69 +112,17 @@ int ViverOuMorrer(int** grid, int i, int j)
 	}
 }
 
-
-
-
-void * Iterar(void * args)
+int Evoluir(int** old, int** new)
 {
-	
-	Tthread * arg = (Tthread*)(args);
-	int j = 0;
-
-	for (j = arg->def; j < ((tam/num_threads) + arg->def); j++)
-	{
-		new[arg->i][j] = ViverOuMorrer(old, arg->i, j);
-		vet[arg->tr] += new[arg->i][j];
-	}
-	pthread_exit(NULL);
-}
-
-void instanciar(int i)
-{
-	
-	int tr, x;
-	Tthread* aux = NULL;
-
-	for(tr = 0; tr < num_threads; tr++)
-	{
-		aux = malloc(sizeof(Tthread));
-		aux->i = i;
-		aux->def = ((tam/num_threads) * tr);
-		aux->tr = tr;
-		vet[tr] = 0;
-
-		x = pthread_create(&(thread[tr]), NULL, Iterar, (void*)(aux) );
-
-		if(x)
-		{
-			printf("Error: create = %d\n", x);
-			exit(-1);
-		}
-	}
-}
-
-int Evoluir()
-{
-	
-	int i, j, c = 0, rc;
-	void* status;
-		
-	for (i = 0; i < tam; i++)
-	{
-		//printf("/nInstanciar Linha: %d", i + 1);
-		instanciar(i);
-
-		for(j = 0; j < num_threads; j++)
-		{
-			rc = pthread_join(thread[j], &status);
-			if(rc)
-			{
-				printf("Error: join code = %d", rc);
-				exit(-1);
-			}		
-			c += vet[j];
-		}
-	}
+	int i, j, c = 0;
+    	{
+        	for (i = 0; i < tam; i++){
+            		for (j = 0; j < tam; j++){
+                		new[i][j] = ViverOuMorrer(old, i, j);
+                		c += new[i][j];
+            		}
+        	}
+    	}
 
 	return c;
 }
@@ -198,15 +142,14 @@ int main(int argc, char **argv)
 	
 	tam = atoi(argv[1]);
 	ger = atoi(argv[2]);
-	num_threads = atoi(argv[3]);
 	
 	inicializacao();
-
+	
 	gettimeofday(&inicio, NULL);
 
 	for (int i = 0; i < ger; i++)
 	{
-		totalVivos = Evoluir();
+		totalVivos = Evoluir(old, new);
 		printf("Geracao %d: %d\n", i + 1, totalVivos);
 
 		trocar_matrizes(&old, &new);
