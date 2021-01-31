@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
+#include <sys/time.h>
 
 /*
 Compilacao:
-mpicc -o mpi jogo_vida_mpi.c
+mpicc -o mpi jogo_vida_mpi.c -O3
 Execucao:
 mpirun -n 4 ./mpi 2048 500
 */
@@ -161,7 +162,16 @@ void enviar_receber(int **grid, int rank, int mode, int ger){
 	);
 }
 
+void TempoDecorrido(struct timeval inicio, struct timeval fim){
+	int tmili = (int) (1000*(fim.tv_sec - inicio.tv_sec)+
+                    (fim.tv_usec - inicio.tv_usec)/1000);
+	int segundos = tmili/1000;
+	int milisegundos = tmili-segundos*1000;
+	printf("\nTempo: %d segundos %d milisegundos\n", segundos, milisegundos);
+}
+
 int main(int argc, char **argv){
+	struct timeval inicio, final;
     MPI_Init(NULL, NULL);
 
     int world_rank;
@@ -179,7 +189,8 @@ int main(int argc, char **argv){
 
     if(world_rank==0){
         printf("Condicao inicial: %d\n", global_sum);
-    }
+		gettimeofday(&inicio, NULL);
+	}
 
     for(i=0;i<ger;i++){
         local_sum = Evoluir(old, new, world_rank);
@@ -188,11 +199,15 @@ int main(int argc, char **argv){
             printf("Geracao %d: %d\n", i + 1, global_sum);
         }
         trocar_matrizes(&old, &new);
-        enviar_receber(old, world_rank, 1, i);
-		//MPI_Barrier(MPI_COMM_WORLD);
-		enviar_receber(old, world_rank, -1, i);
-		//MPI_Barrier(MPI_COMM_WORLD);
+        if(num_processos>1){
+			enviar_receber(old, world_rank, 1, i);
+			enviar_receber(old, world_rank, -1, i);
+		}
     }
 	MPI_Barrier(MPI_COMM_WORLD);
+	if(world_rank==0){
+		gettimeofday(&final, NULL);
+		TempoDecorrido(inicio, final);
+	}
     return 0;
 }
